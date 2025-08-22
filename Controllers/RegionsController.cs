@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using NzWalksApi_Dotnet_8.CustomActionFilters;
 using NzWalksApi_Dotnet_8.Data;
 using NzWalksApi_Dotnet_8.Models.Domain;
 using NzWalksApi_Dotnet_8.Models.DTO;
@@ -35,7 +34,7 @@ namespace NzWalksApi_Dotnet_8.Controllers
         [HttpGet]
         [Route("{id:guid}")]
         [ActionName("GetRegionById")]
-        public  async Task<IActionResult> GetRegionById([FromRoute] Guid id)
+        public async Task<IActionResult> GetRegionById([FromRoute] Guid id)
         {
             var region = await _regionRepository.GetOneRegionAsync(id);
             if (region is null) return NotFound();
@@ -43,7 +42,8 @@ namespace NzWalksApi_Dotnet_8.Controllers
         }
 
         [HttpPost]
-        public  async Task<IActionResult> CreateNewRegion([FromBody] AddRegionRequestDto addRegionRequestDto)
+        [ValidateModel]
+        public async Task<IActionResult> CreateNewRegion([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
             var regionDomain = _mapper.Map<Region>(addRegionRequestDto);
             regionDomain = await _regionRepository.CreateAsync(regionDomain);
@@ -53,6 +53,7 @@ namespace NzWalksApi_Dotnet_8.Controllers
 
         [HttpPut]
         [Route("{id:guid}")]
+        [ValidateModel]
         public async Task<IActionResult> UpdateRegion([FromRoute] Guid id, [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
         {
             var region = _mapper.Map<Region>(updateRegionRequestDto);

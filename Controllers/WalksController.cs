@@ -21,19 +21,66 @@ namespace NzWalksApi_Dotnet_8.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllWalks()
+        public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000)
         {
-            var walks = await _walkRepository.GetAllWalksAsync();
+            var walks = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery, sortBy,
+                isAscending ?? true, pageNumber, pageSize);
             return Ok(_mapper.Map<List<WalkDto>>(walks));
+        }
+
+        [HttpGet]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> GetWalkById(Guid id)
+        {
+            var walk = await _walkRepository.GetByIdAsync(id);
+            if (walk is null) return NotFound();
+            return Ok(_mapper.Map<WalkDto>(walk));
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateWalk([FromBody] AddWalkRequestDto addWalkRequestDto)
         {
-            var mappedWalk = _mapper.Map<Walk>(addWalkRequestDto);
-            await _walkRepository.CreateAsync(mappedWalk);
+            if (ModelState.IsValid)
+            {
+                var mappedWalk = _mapper.Map<Walk>(addWalkRequestDto);
+                await _walkRepository.CreateAsync(mappedWalk);
 
-            return Ok(_mapper.Map<WalkDto>(mappedWalk));
+                return Ok(_mapper.Map<WalkDto>(mappedWalk));
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPut]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> UpdateWalk([FromRoute] Guid id, [FromBody] UpdateWalkRequestDto updateWalkRequestDto)
+        {
+            if (ModelState.IsValid)
+            {
+                var mappedWalk = _mapper.Map<Walk>(updateWalkRequestDto);
+                mappedWalk = await _walkRepository.UpdateAsync(id, mappedWalk);
+                if (mappedWalk == null) return NotFound();
+                return Ok(_mapper.Map<WalkDto>(mappedWalk));
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> RemoveWalk(Guid id)
+        {
+            var walk = await _walkRepository.DeleteAsync(id);
+
+            if (walk is null) return NotFound();
+
+            return Ok(_mapper.Map<WalkDto>(walk));
         }
     }
 }
